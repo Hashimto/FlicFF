@@ -1,5 +1,17 @@
 import os
 import sys
+
+# High-DPI Scaling Support (Fix for blurry text on windows high-DPI/4K screens)
+if sys.platform.startswith("win"):
+    try:
+        import ctypes
+        ctypes.windll.shcore.SetProcessDpiAwareness(1) # System DPI Aware
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
 import re
 import math
 import json
@@ -84,33 +96,35 @@ TRANSLATIONS = {
     }
 }
 
-# Theme Color palettes
+# Theme Color palettes - Neutral OS look with high contrast and readability
 THEMES = {
     "light": {
-        "bg": "#F5F5F7",
-        "card": "#FFFFFF",
-        "text": "#1D1D1F",
-        "text_sec": "#86868B",
-        "accent": "#0071E3",
-        "accent_hover": "#0077ED",
-        "border": "#D2D2D7",
-        "btn_bg": "#E8E8ED",
-        "btn_fg": "#1D1D1F",
-        "progress_bg": "#E5E5EA",
-        "progress_bar": "#34C759"
+        "bg": "#F0F0F0",          # Standard OS window background light gray (Win/Mac style)
+        "card": "#FFFFFF",        # Unblemished high contrast card for Drop Zone
+        "text": "#000000",        # Pitch-black main text for flawless readability (no blurry low-contrast gray)
+        "text_sec": "#333333",    # Deep Charcoal for status metadata and secondary headers
+        "accent": "#0066CC",      # Native Slate Blue active color
+        "accent_hover": "#004B99",# Native deep blue hover
+        "border": "#BCBCBC",      # Standard OS-like subtle borders
+        "btn_bg": "#E1E1E1",      # Flat standard window button gray
+        "btn_fg": "#000000",      # Classic black text inside buttons
+        "btn_hover_bg": "#D0D0D0",# Standard Windows button hover effect
+        "progress_bg": "#CCCCCC", # Explicit progress bar track
+        "progress_bar": "#0066CC" # Clean blue progress highlight matching OS themes
     },
     "dark": {
-        "bg": "#1E1E1E",
-        "card": "#2D2D2D",
-        "text": "#E3E3E3",
-        "text_sec": "#9A9A9A",
-        "accent": "#0071E3",
-        "accent_hover": "#0077ED",
-        "border": "#424242",
-        "btn_bg": "#3A3A3D",
+        "bg": "#202020",          # System dark neutral background
+        "card": "#2D2D2D",        # Standard dark card area
+        "text": "#FFFFFF",        # High contrast white
+        "text_sec": "#CCCCCC",    # Visible gray text
+        "accent": "#0078D4",      # Windows/macOS modern standard accent
+        "accent_hover": "#1084E3",
+        "border": "#404040",
+        "btn_bg": "#333333",
         "btn_fg": "#FFFFFF",
-        "progress_bg": "#2C2C2E",
-        "progress_bar": "#30D158"
+        "btn_hover_bg": "#454545",
+        "progress_bg": "#1A1A1A",
+        "progress_bar": "#0078D4"
     }
 }
 
@@ -270,31 +284,31 @@ class FlicFFApp:
         self.tab_frame = tk.Frame(self.main_container)
         self.tab_frame.pack(fill=tk.X, pady=(0, 10))
         
-        self.btn_tab_audio = tk.Button(self.tab_frame, text="Audio Output", font=("Helvetica", 10, "bold"), bd=0, relief=tk.FLAT, command=lambda: self.set_output_tab("audio"), height=2)
+        self.btn_tab_audio = tk.Button(self.tab_frame, text="Audio Output", font=("Helvetica", 9, "bold"), bd=1, relief=tk.GROOVE, command=lambda: self.set_output_tab("audio"), height=2)
         self.btn_tab_audio.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
-        self.btn_tab_video = tk.Button(self.tab_frame, text="Video Output", font=("Helvetica", 10, "bold"), bd=0, relief=tk.FLAT, command=lambda: self.set_output_tab("video"), height=2)
+        self.btn_tab_video = tk.Button(self.tab_frame, text="Video Output", font=("Helvetica", 9, "bold"), bd=1, relief=tk.GROOVE, command=lambda: self.set_output_tab("video"), height=2)
         self.btn_tab_video.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         # FlicFlac-Style Core Box: Drop Zone (Left) and Formats (Right)
         self.flicflac_body = tk.Frame(self.main_container)
         self.flicflac_body.pack(fill=tk.BOTH, expand=True)
 
-        # Left Drag and Drop Zone Card
+        # Left Drag and Drop Zone Card - System-integrated standard looking box with solid thin border
         self.drop_card = tk.Label(
             self.flicflac_body, 
             text="Select or\nDrop Files", 
-            font=("Helvetica", 11, "bold"),
-            relief=tk.FLAT, 
-            bd=0,
+            font=("Helvetica", 10),
+            relief=tk.SOLID, 
+            bd=1,
             cursor="hand2"
         )
         self.drop_card.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 6))
         self.drop_card.bind("<Button-1>", self.browse_input_file)
 
-        # Right Action Buttons Stack (Format conversion actions)
-        self.formats_container = tk.Frame(self.flicflac_body, width=120)
-        self.formats_container.pack(side=tk.RIGHT, fill=tk.Y)
+        # Right Action Buttons Stack (Format conversion actions) - fixed sizing container
+        self.formats_container = tk.Frame(self.flicflac_body)
+        self.formats_container.pack(side=tk.RIGHT, fill=tk.Y, padx=(6, 0))
 
         # Right buttons will be populated dynamically based on Selected Tab (audio or video output)
         self.buttons_list = []
@@ -303,7 +317,7 @@ class FlicFFApp:
         self.quality_frame = tk.Frame(self.main_container)
         self.quality_frame.pack(fill=tk.X, pady=(10, 8))
         
-        self.lbl_quality = tk.Label(self.quality_frame, text="Quality Presets:", font=("Helvetica", 9, "bold"))
+        self.lbl_quality = tk.Label(self.quality_frame, text="Quality Presets:", font=("Helvetica", 9))
         self.lbl_quality.pack(side=tk.LEFT, padx=(0, 6))
 
         self.quality_var = tk.StringVar(value="cd")
@@ -374,19 +388,22 @@ class FlicFFApp:
             btn = tk.Button(
                 self.formats_container, 
                 text=fmt, 
-                font=("Helvetica", 10, "bold"),
-                bd=0,
+                font=("Helvetica", 9),
+                bd=1,
+                relief=tk.GROOVE,
                 bg=theme_colors["btn_bg"],
                 fg=theme_colors["btn_fg"],
-                activebackground=theme_colors["accent"],
-                activeforeground="#FFFFFF",
+                activebackground=theme_colors["btn_hover_bg"],
+                activeforeground=theme_colors["btn_fg"],
                 cursor="hand2",
-                pady=6,
+                width=11,               # Absolute char width for perfect uniform width alignment
+                height=2,               # Absolute char height for perfect height synchronization
+                pady=2,
                 command=lambda f=fmt: self.start_conversion_process(f)
             )
-            # Add dynamic hover feedback matching macOS styles
-            btn.bind("<Enter>", lambda e, b=btn: b.config(bg=theme_colors["accent"], fg="#FFFFFF"))
-            btn.bind("<Leave>", lambda e, b=btn: b.config(bg=theme_colors["btn_bg"], fg=theme_colors["btn_fg"]))
+            # Hover feedback conforming to native standards (Windows classic button highlighted hover color)
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg=THEMES[self.theme]["btn_hover_bg"]))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg=THEMES[self.theme]["btn_bg"]))
             
             btn.pack(side=tk.TOP, fill=tk.X, pady=(0, 4))
             self.buttons_list.append(btn)
@@ -683,29 +700,47 @@ class FlicFFApp:
         self.progress_frame.config(bg=colors["bg"])
         self.checkbox_rail.config(bg=colors["bg"])
         
-        # Segmented Tabs styling (active vs inactive selection)
+        # Segmented Tabs styling resembling classical physical desktop tabs (replaces custom colors with high contrast native states)
         tab_bg_audio = colors["card"] if self.current_tab == "audio" else colors["btn_bg"]
-        tab_fg_audio = colors["accent"] if self.current_tab == "audio" else colors["text_sec"]
-        self.btn_tab_audio.config(bg=tab_bg_audio, fg=tab_fg_audio, activebackground=colors["card"])
+        tab_fg_audio = colors["text"] if self.current_tab == "audio" else colors["text_sec"]
+        self.btn_tab_audio.config(
+            bg=tab_bg_audio, 
+            fg=tab_fg_audio, 
+            activebackground=colors["card"],
+            activeforeground=colors["text"],
+            relief=tk.SUNKEN if self.current_tab == "audio" else tk.RAISED,
+            bd=1
+        )
         
         tab_bg_video = colors["card"] if self.current_tab == "video" else colors["btn_bg"]
-        tab_fg_video = colors["accent"] if self.current_tab == "video" else colors["text_sec"]
-        self.btn_tab_video.config(bg=tab_bg_video, fg=tab_fg_video, activebackground=colors["card"])
+        tab_fg_video = colors["text"] if self.current_tab == "video" else colors["text_sec"]
+        self.btn_tab_video.config(
+            bg=tab_bg_video, 
+            fg=tab_fg_video, 
+            activebackground=colors["card"],
+            activeforeground=colors["text"],
+            relief=tk.SUNKEN if self.current_tab == "video" else tk.RAISED,
+            bd=1
+        )
  
-        # Drag area colors
-        self.drop_card.config(bg=colors["card"], fg=colors["text"])
+        # Drag area colors and high contrast borders
+        self.drop_card.config(bg=colors["card"], fg=colors["text"], relief=tk.SOLID, bd=1)
         self.formats_container.config(bg=colors["bg"])
         
         # Quality labels & buttons
         self.lbl_quality.config(bg=colors["bg"], fg=colors["text"])
         self.lbl_status.config(bg=colors["bg"], fg=colors["text_sec"])
         
-        # Checkboxes and Canvas redraw
+        # Checkboxes and Canvas redraw with high-contrast accessibility profiles
         style = ttk.Style()
         style.configure("TCheckbutton", background=colors["bg"], foreground=colors["text"])
+        
+        # Re-configure standard Combobox styles dynamically to adapt to system palettes and remain perfectly readable 
+        style.map("TCombobox", fieldbackground=[("readonly", colors["card"])], foreground=[("readonly", colors["text"])], selectbackground=[("readonly", colors["accent"])])
+        
         self.draw_progress_bar(0)
         
-        # Sync dynamic action list buttons
+        # Sync dynamic action list buttons with absolute width/height lock
         self.update_action_buttons()
 
     def show_about(self):
