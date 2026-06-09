@@ -289,12 +289,12 @@ class FlicFFApp:
             bd=0,
             cursor="hand2"
         )
-        self.drop_card.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, marginRight=6, padx=(0, 6))
+        self.drop_card.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 6))
         self.drop_card.bind("<Button-1>", self.browse_input_file)
 
         # Right Action Buttons Stack (Format conversion actions)
-        self.formats_container = tk.Frame(self.flicflac_body)
-        self.formats_container.pack(side=tk.RIGHT, fill=tk.Y, width=120)
+        self.formats_container = tk.Frame(self.flicflac_body, width=120)
+        self.formats_container.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Right buttons will be populated dynamically based on Selected Tab (audio or video output)
         self.buttons_list = []
@@ -313,7 +313,7 @@ class FlicFFApp:
             state="readonly",
             values=["low", "normal", "cd", "studio"]
         )
-        self.quality_combo.pack(side=tk.FILL, fill=tk.X, expand=True)
+        self.quality_combo.pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.quality_combo.bind("<<ComboboxSelected>>", self.on_quality_selected)
 
         # Real-time Progress Bar & Speed Status Section
