@@ -46,8 +46,8 @@ echo "[+] Standalone executable created: dist/FlicFF"
 
 # 4. Packaging into a DMG Installer
 echo "[*] Creating macOS mountable DMG image..."
-# Create a temporary empty folder for DMG layout
-dmg_temp="dist/dmg_temp"
+# Create a temporary empty folder for DMG layout out-of-bounds from PyInstaller's dist
+dmg_temp="dmg_temp"
 rm -rf "$dmg_temp"
 mkdir -p "$dmg_temp"
 
@@ -70,13 +70,21 @@ ln -s /Applications "$dmg_temp/Applications"
 # Output DMG filename
 dmg_name="FlicFF_Setup_macOS.dmg"
 rm -f "dist/$dmg_name"
+rm -f "$dmg_name"
+
+# Flush filesystem buffers to resolve macOS resource locking (Resource busy errors)
+sync
+sleep 2
 
 echo "[*] Compiling disk image using hdiutil..."
 hdiutil create -volname "FlicFF Installer" \
                -srcfolder "$dmg_temp" \
                -ov \
                -format UDZO \
-               "dist/$dmg_name"
+               "$dmg_name"
+
+# Move generated DMG into dist folder cleanly
+mv "$dmg_name" "dist/$dmg_name"
 
 # Cleanup temporary files
 rm -rf "$dmg_temp"
