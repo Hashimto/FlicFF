@@ -1,0 +1,63 @@
+name: Package Desktop Converter Bundles
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Pip Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build Executable with PyInstaller
+        run: |
+          pyinstaller --noconsole --onefile --name="FlicFF" flicff_converter.py
+
+      - name: Upload Windows Asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlicFF_Windows_EXE
+          path: dist/FlicFF.exe
+
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Check out Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Pip Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build macOS App Bundle & DMG
+        run: |
+          chmod +x install_mac.sh
+          ./install_mac.sh
+
+      - name: Upload macOS Asset DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlicFF_Mac_DMG
+          path: dist/FlicFF_Setup_macOS.dmg

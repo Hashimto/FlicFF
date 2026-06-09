@@ -1,0 +1,9 @@
+# Python dependencies for FlicFlac Audio/Video Converter
+# Install using: pip install -r requirements.txt
+
+# To packaging executable
+pyinstaller>=6.0.0
+
+# Optional: Add native OS drag and drop bindings inside Tkinter.
+# Under Windows & Mac, you can run compiling with or without this.
+tkinterdnd2-universal>=1.0.1

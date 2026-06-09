@@ -1,0 +1,6 @@
+{
+  "name": "FlicFF",
+  "description": "Lightweight cross-platform file converter inspired by FlicFlac (now FlicFF) with FFmpeg progress.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
